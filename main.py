@@ -2,7 +2,13 @@ import flet as ft
 from flet import UserControl, Page
 from flet import Text
 from glob import glob
-import os
+import os,sys
+
+try:
+    os.chdir(sys._MEIPASS)
+    print(sys._MEIPASS)
+except:
+    os.chdir(os.getcwd())
 
 class password_page(UserControl):
     def __init__(self):
@@ -13,15 +19,14 @@ class main_page(UserControl):
         pass
 
 def init_system():
-    path = os.getcwd()
-    os.chdir(path)
+    # path = os.getcwd()
+    # os.chdir(path)
     
-    src = {}
+    assets = {}
 
     fonts = {}
     imgs = {}
-
-    for i in glob(os.path.join(*["src","fonts","*.ttf"])):
+    for i in glob(os.path.join(*["assets","fonts","*.ttf"])):
         if "NanumGothicBold" in i:
             fonts["bold"] = i
         elif "NanumGothicExtraBold" in i:
@@ -31,24 +36,24 @@ def init_system():
         elif "NanumGothic" in i:
             fonts["normal"] = i
     
-    for i in glob(os.path.join(*["src","img","*.svg"])):
+    for i in glob(os.path.join(*["assets","img","*.svg"])):
         if "background" in i:
             imgs["background"] = i
 
-    src["fonts"] = fonts
-    src["imgs"] = imgs
+    assets["fonts"] = fonts
+    assets["imgs"] = imgs
 
-    return src
+    return assets
 
 def init_flet(page : Page):
     page.title = "My Little Friend"
     page.bgcolor = ft.colors.LIGHT_BLUE_100
-    src = init_system()
+    assets = init_system()
     page.fonts = {
-        "nanum_normal" : src["fonts"]["normal"],
-        "nanum_bold" : src["fonts"]["bold"],
-        "nanum_extrabold" : src["fonts"]["extrabold"],
-        "nanum_light" : src["fonts"]["light"],
+        "nanum_normal" : assets["fonts"]["normal"],
+        "nanum_bold" : assets["fonts"]["bold"],
+        "nanum_extrabold" : assets["fonts"]["extrabold"],
+        "nanum_light" : assets["fonts"]["light"],
     }
 
     page.vertical_alignment = "center"
@@ -64,5 +69,4 @@ def init_flet(page : Page):
     ,spacing=25))
     # page.add(ft.Text("hi"))
 
-ft.app(target=init_flet)
-print(init_system())
+ft.app(target=init_flet,assets_dir="assets")
