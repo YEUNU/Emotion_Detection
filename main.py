@@ -51,15 +51,15 @@ def main(page : Page):
     style_init()
 
     # page.window_center()
-    user_name = ft.TextField(label="이름",hint_text = "이름을 작성해주세요",text_size=15)
-    password = ft.TextField(label="비밀번호",hint_text = "비밀번호를 작성해주세요",text_size=15,password=True, can_reveal_password=True)
+    user_name = ft.TextField(label="이름",hint_text = "이름을 작성해주세요",text_size=15,width=250)
+    password = ft.TextField(label="비밀번호",hint_text = "비밀번호를 작성해주세요",text_size=15,password=True, can_reveal_password=True,width=250)
 
     main_page = ft.View(
                 "/",
                 [
-                    ft.Icon(name = ft.icons.QUESTION_ANSWER,color = "black",size = 150),
-                    ft.Text(value="편하게 이야기 하는", color="black",font_family="nanum_light",size=30,text_align="center"),
-                    ft.Text(value="나만의 작은 친구", color="black",font_family="nanum_extrabold",size=50,text_align="center"),
+                    ft.Icon(name = ft.icons.QUESTION_ANSWER,color = "black",size = 80),
+                    ft.Text(value="편하게 이야기 하는", color="gray100",font_family="nanum_light",size=20,text_align="center"),
+                    ft.Text(value="나만의 작은 친구", color="brown200",font_family="nanum_extrabold",size=35,text_align="center"),
                     user_name,
                     ft.ElevatedButton("확인", on_click=lambda _: page.go("/password")),
                 ],spacing=25,vertical_alignment="center",horizontal_alignment="center"
