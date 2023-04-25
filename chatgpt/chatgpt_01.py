@@ -1,7 +1,7 @@
 import os
 import openai
 openai.organization = "org-URZ05Egxb2USeXMQiHVKMCKr"
-openai.api_key = "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"
+openai.api_key = "" # chatgpt api 
 
 # 조언 역할을 하는 함수
 def generate_gpt3_response(user_text, print_output=False):
