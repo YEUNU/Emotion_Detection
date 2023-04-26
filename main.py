@@ -6,6 +6,7 @@ import numpy as np
 import datetime
 import pyaudio
 import wave
+import whisper
 
 try:
     os.chdir(sys._MEIPASS)
@@ -106,7 +107,7 @@ class AudioRecorder:
         self.record_status = record_status
         if not record_status and self.recording:
             self.stop_recording()
-        if record_status:
+        if self.record_status:
             self.start_recording()
             data = self.stream.read(self.chunk)
             self.frames.append(data)
@@ -192,8 +193,12 @@ def init_system():
         df["user_emotion"] = None
         df.to_csv(temp,index=False)
 
+    model = whisper.load_model("base")
+
     assets["fonts"] = fonts
     assets["imgs"] = imgs
+    assets["model"] = model
+    
 
     return assets
 
@@ -201,7 +206,6 @@ def main(page : ft.Page):
     hf = ft.HapticFeedback()
     page.overlay.append(hf)
     assets = init_system()
-    record_status = False
 
     user = {
         "user_name" : str(),
@@ -302,25 +306,26 @@ def main(page : ft.Page):
             )
         page.update()
 
-    def show_bs(e):
-        bs.open = True
-        bs.update()
-
     def close_bs(e):
         global recorder
         bs.open = False
         recorder.run(False)
         bs.update()
-
-    def record(e):
-        global recorder
-        page.overlay.append(bs)
-        show_bs
+        result = assets["model"].transcribe(recorder.filename)["text"]
+        message_tf.value = result
         page.update()
+
+    def record_bs(e):
+        bs.open = True
+        bs.update()
+        record()
+
+    def record():
+        global recorder
         now = str(datetime.datetime.now())
         temp = os.path.join(*["assets","wav",".".join([now,"wav"])])
         recorder = AudioRecorder(temp)
-
+        print(recorder.record_status,"@@@",recorder.recording)
         while True:
             recorder.run(True)
             if recorder.recording == False:
@@ -337,7 +342,7 @@ def main(page : ft.Page):
     new_password_check_tf = ft.TextField(label="비밀번호 확인",text_size=15,password=True, can_reveal_password=True,width=250,keyboard_type="NUMBER",value="1234",on_submit=new_password_check)
     message_tf = ft.TextField(autofocus=True,shift_enter=True,expand=True,on_submit=send)
 
-    record_btn = ft.IconButton(icon=ft.icons.KEYBOARD_VOICE,icon_size=35,on_click=record)
+    record_btn = ft.IconButton(icon=ft.icons.KEYBOARD_VOICE,icon_size=35,on_click=record_bs)
     record_stop_button = ft.IconButton(icon = ft.icons.RADIO_BUTTON_CHECKED,icon_color="red", icon_size=100, on_click=close_bs)
     send_btn = ft.IconButton(icon=ft.icons.SEND,icon_size=35,on_click=send) 
 
@@ -357,6 +362,8 @@ def main(page : ft.Page):
         on_dismiss=close_bs,
     )
 
+    page.overlay.append(bs)
+    bs.open = False
 
     main_page = ft.View(
                 "/",
