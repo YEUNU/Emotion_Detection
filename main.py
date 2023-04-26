@@ -1,10 +1,12 @@
 import flet as ft
-from flet import Page
 from glob import glob
 import pandas as pd
 import os,sys
 import numpy as np
-import time
+import datetime
+import pyaudio
+import wave
+
 try:
     os.chdir(sys._MEIPASS)
     print(sys._MEIPASS)
@@ -16,17 +18,17 @@ class User_contorl():
         super().__init__()
 
     def account_new(user_name,user_password):
-        path = os.path.join(*["assets","info","user_info.csv"])
-        orig = pd.read_csv(path)
+        temp = os.path.join(*["assets","info","user_info.csv"])
+        orig = pd.read_csv(temp)
         new = pd.DataFrame()
         new["user_name"] = [user_name]
         new["user_password"] = [user_password]
         result = pd.concat([orig,new],axis=0)
-        result.to_csv(path,index=False)
+        result.to_csv(temp,index=False)
 
     def account_check(user_name):
-        path = os.path.join(*["assets","info","user_info.csv"])
-        orig = pd.read_csv(path)
+        temp = os.path.join(*["assets","info","user_info.csv"])
+        orig = pd.read_csv(temp)
         names = np.unique(orig["user_name"])
         if user_name in names:
             return True
@@ -34,8 +36,8 @@ class User_contorl():
             return False
     
     def password_check(user_name,input_password):
-        path = os.path.join(*["assets","info","user_info.csv"])
-        orig = pd.read_csv(path)
+        temp = os.path.join(*["assets","info","user_info.csv"])
+        orig = pd.read_csv(temp)
         pwd = str(*orig["user_password"][orig["user_name"]==user_name].values)
         if input_password == pwd:
             return True
@@ -60,10 +62,54 @@ class Data_control():
         new["user_reply"] = [reply]
         new["user_emotion"] = [emotion]
 
-        path = os.path.join(*["assets","info","user_message.csv"])
-        orig = pd.read_csv(path)
+        temp = os.path.join(*["assets","info","user_message.csv"])
+        orig = pd.read_csv(temp)
         result = pd.concat([orig,new],axis=0)
-        result.to_csv(path,index=False)
+        result.to_csv(temp,index=False)
+
+
+class AudioRecorder:
+    def __init__(self, filename):
+        self.filename = filename
+        self.chunk = 1024 
+        self.format = pyaudio.paInt16  
+        self.channels = 1  
+        self.rate = 16000  
+        self.frames = [] 
+        self.recording = False  
+        self.audio = pyaudio.PyAudio()
+        self.stream = self.audio.open(format=self.format, channels=self.channels,
+                                      rate=self.rate, input=True,
+                                      frames_per_buffer=self.chunk)
+        self.record_status = False
+
+    def start_recording(self):
+        self.recording = True
+
+    def stop_recording(self):
+        self.stream.stop_stream()
+        self.stream.close()
+        self.audio.terminate()
+        self.recording = False
+        self.save_to_file()
+
+    def save_to_file(self):
+        wave_file = wave.open(self.filename, 'wb')
+        wave_file.setnchannels(self.channels)
+        wave_file.setsampwidth(self.audio.get_sample_size(self.format))
+        wave_file.setframerate(self.rate)
+        wave_file.writeframes(b''.join(self.frames))
+        wave_file.close()
+        self.frames = []
+
+    def run(self, record_status):
+        self.record_status = record_status
+        if not record_status and self.recording:
+            self.stop_recording()
+        if record_status:
+            self.start_recording()
+            data = self.stream.read(self.chunk)
+            self.frames.append(data)
 
 
 
@@ -80,7 +126,7 @@ class ChatMessage(ft.Row):
                     height=40,
                     padding=5,
                     margin=5,
-                    border_radius=5
+                    border_radius=5,
                     ),
                 ft.Icon(
                     name=ft.icons.ACCOUNT_CIRCLE,
@@ -125,18 +171,18 @@ def init_system():
     for i in glob(os.path.join(*["assets","img","*.svg"])):
         if "background" in i:
             imgs["background"] = i
-    path = os.path.join(*["assets","info","user_info.csv"])
+    temp = os.path.join(*["assets","info","user_info.csv"])
     try:
-        temp = pd.read_csv(path)
+        temp = pd.read_csv(temp)
     except:
         df = pd.DataFrame()
         df["user_name"] = None
         df["user_password"] = None
-        df.to_csv(path,index=False)
+        df.to_csv(temp,index=False)
         
-    path = os.path.join(*["assets","info","user_message.csv"])
+    temp = os.path.join(*["assets","info","user_message.csv"])
     try:
-        temp = pd.read_csv(path)
+        temp = pd.read_csv(temp)
     except:
         df = pd.DataFrame()
         df["user_name"] = None
@@ -144,17 +190,18 @@ def init_system():
         df["user_message"] = None
         df["user_reply"] = None
         df["user_emotion"] = None
-        df.to_csv(path,index=False)
+        df.to_csv(temp,index=False)
 
     assets["fonts"] = fonts
     assets["imgs"] = imgs
 
     return assets
 
-def main(page : Page):
+def main(page : ft.Page):
     hf = ft.HapticFeedback()
     page.overlay.append(hf)
     assets = init_system()
+    record_status = False
 
     user = {
         "user_name" : str(),
@@ -255,6 +302,30 @@ def main(page : Page):
             )
         page.update()
 
+    def show_bs(e):
+        bs.open = True
+        bs.update()
+
+    def close_bs(e):
+        global recorder
+        bs.open = False
+        recorder.run(False)
+        bs.update()
+
+    def record(e):
+        global recorder
+        page.overlay.append(bs)
+        show_bs
+        page.update()
+        now = str(datetime.datetime.now())
+        temp = os.path.join(*["assets","wav",".".join([now,"wav"])])
+        recorder = AudioRecorder(temp)
+
+        while True:
+            recorder.run(True)
+            if recorder.recording == False:
+                break
+
     def view_pop(view):
         page.views.pop()
         top_view = page.views[-1]
@@ -262,14 +333,30 @@ def main(page : Page):
 
     user_name_tf = ft.TextField(label="이름",hint_text = "이름을 작성해주세요",text_size=15,width=250,value="admin",on_submit=blank_check)
     password_tf = ft.TextField(label="비밀번호",hint_text = "비밀번호를 작성해주세요",text_size=15,password=True, can_reveal_password=True,width=250,keyboard_type="NUMBER",value="1234",on_submit=password_check)
-    new_password_tf = ft.TextField(label="사용할 비밀번호",hint_text = "비밀번호를 작성해주세요",text_size=15,password=True, can_reveal_password=True,width=250,keyboard_type="NUMBER",value="1234",on_submit=password_check)
-    new_password_check_tf = ft.TextField(label="비밀번호 확인",text_size=15,password=True, can_reveal_password=True,width=250,keyboard_type="NUMBER",value="1234",on_submit=password_check)
+    new_password_tf = ft.TextField(label="사용할 비밀번호",hint_text = "비밀번호를 작성해주세요",text_size=15,password=True, can_reveal_password=True,width=250,keyboard_type="NUMBER",value="1234")
+    new_password_check_tf = ft.TextField(label="비밀번호 확인",text_size=15,password=True, can_reveal_password=True,width=250,keyboard_type="NUMBER",value="1234",on_submit=new_password_check)
     message_tf = ft.TextField(autofocus=True,shift_enter=True,expand=True,on_submit=send)
 
-    record_btn = ft.IconButton(icon=ft.icons.KEYBOARD_VOICE,icon_size=35)
+    record_btn = ft.IconButton(icon=ft.icons.KEYBOARD_VOICE,icon_size=35,on_click=record)
+    record_stop_button = ft.IconButton(icon = ft.icons.RADIO_BUTTON_CHECKED,icon_color="red", icon_size=100, on_click=close_bs)
     send_btn = ft.IconButton(icon=ft.icons.SEND,icon_size=35,on_click=send) 
 
-    chat = ft.ListView(expand=True,spacing=10,auto_scroll=True,)
+    chat = ft.ListView(expand=True,spacing=10,auto_scroll=True,horizontal=400)
+
+    bs = ft.BottomSheet(
+        ft.Container(
+            ft.Column(
+                [
+                    record_stop_button
+                ],
+                tight=True,alignment=ft.alignment.center
+            ),
+            padding=10,alignment=ft.alignment.center
+        ),
+        open=True,
+        on_dismiss=close_bs,
+    )
+
 
     main_page = ft.View(
                 "/",
