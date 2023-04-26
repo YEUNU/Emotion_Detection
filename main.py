@@ -1,15 +1,71 @@
 import flet as ft
-from flet import KeyboardEvent, Page
-from flet import Text
+from flet import Page
 from glob import glob
 import pandas as pd
 import os,sys
-
+import numpy as np
+import time
 try:
     os.chdir(sys._MEIPASS)
     print(sys._MEIPASS)
 except:
     os.chdir(os.getcwd())
+
+class User_contorl():
+    def __init__(self):
+        super().__init__()
+
+    def account_new(user_name,user_password):
+        path = os.path.join(*["assets","info","user_info.csv"])
+        orig = pd.read_csv(path)
+        new = pd.DataFrame()
+        new["user_name"] = [user_name]
+        new["user_password"] = [user_password]
+        result = pd.concat([orig,new],axis=0)
+        result.to_csv(path,index=False)
+
+    def account_check(user_name):
+        path = os.path.join(*["assets","info","user_info.csv"])
+        orig = pd.read_csv(path)
+        names = np.unique(orig["user_name"])
+        if user_name in names:
+            return True
+        else:
+            return False
+    
+    def password_check(user_name,input_password):
+        path = os.path.join(*["assets","info","user_info.csv"])
+        orig = pd.read_csv(path)
+        pwd = str(*orig["user_password"][orig["user_name"]==user_name].values)
+        if input_password == pwd:
+            return True
+        else:
+            return False
+    
+    def new_password_check(user_password,confirm_pssword):
+        if user_password == confirm_pssword:
+            return True
+        else:
+            return False
+
+class Data_control():
+    def __init__(self):
+        super().__init__()
+    
+    def save(user_name,time,message,reply,emotion):
+        new = pd.DataFrame()
+        new["user_name"] = [user_name]
+        new["user_time"] = [time]
+        new["user_message"] = [message]
+        new["user_reply"] = [reply]
+        new["user_emotion"] = [emotion]
+
+        path = os.path.join(*["assets","info","user_message.csv"])
+        orig = pd.read_csv(path)
+        result = pd.concat([orig,new],axis=0)
+        result.to_csv(path,index=False)
+
+
 
 class ChatMessage(ft.Row):
     def __init__(self, text,message_type):
@@ -52,8 +108,8 @@ class ChatMessage(ft.Row):
             ]
     
 def init_system():
+    os.makedirs(os.path.join(*["assets","info"]), exist_ok=True)
     assets = {}
-
     fonts = {}
     imgs = {}
     for i in glob(os.path.join(*["assets","fonts","*.ttf"])):
@@ -69,26 +125,29 @@ def init_system():
     for i in glob(os.path.join(*["assets","img","*.svg"])):
         if "background" in i:
             imgs["background"] = i
+    path = os.path.join(*["assets","info","user_info.csv"])
     try:
-        user_info_df = pd.read_csv("./assets/info/user_info.csv")
+        temp = pd.read_csv(path)
     except:
-        df = pd.DataFrame(columns=["user_name","password","recent_emotion"])
-        df.to_csv("./assets/info/user_info.csv")
-    finally:
-        user_info_df = pd.read_csv("./assets/info/user_info.csv")
-
+        df = pd.DataFrame()
+        df["user_name"] = None
+        df["user_password"] = None
+        df.to_csv(path,index=False)
+        
+    path = os.path.join(*["assets","info","user_message.csv"])
     try:
-        user_message_df = pd.read_csv("./assets/info/user_message.csv")
+        temp = pd.read_csv(path)
     except:
-        df = pd.DataFrame(columns=["user_name","time","message","reply","emotion"])
-        df.to_csv("./assets/info/user_message.csv")
-    finally:
-        user_message_df = pd.read_csv("./assets/info/user_message.csv")
+        df = pd.DataFrame()
+        df["user_name"] = None
+        df["user_time"] = None
+        df["user_message"] = None
+        df["user_reply"] = None
+        df["user_emotion"] = None
+        df.to_csv(path,index=False)
 
     assets["fonts"] = fonts
     assets["imgs"] = imgs
-    assets["user_info"] = user_info_df
-    assets["user_message"] = user_message_df
 
     return assets
 
@@ -96,6 +155,19 @@ def main(page : Page):
     hf = ft.HapticFeedback()
     page.overlay.append(hf)
     assets = init_system()
+
+    user = {
+        "user_name" : str(),
+        "user_password" : str()
+    }
+    message = {
+        "user_name" : str(),
+        "user_time" : str(),
+        "user_message" : str(),
+        "user_reply" : str(),
+        "user_emotion" : str(),
+    }
+
     def style_init():
         page.title = "My Little Friend"
         page.window_height=800
@@ -112,18 +184,40 @@ def main(page : Page):
 
     def send(e):
         if not message_tf.value :
-            pass
+            msg = ChatMessage(message_tf.value,"gpt")
+            chat.controls.append(msg)
         else:
-            user_message = ChatMessage(message_tf.value,"user")
-            chat.controls.append(user_message)
+            msg = ChatMessage(message_tf.value,"user")
+            chat.controls.append(msg)
             message_tf.value = str()
 
         page.update()
 
+    def account_check(e):
+        user["user_name"] = user_name_tf.value
+        message["user_name"] = user_name_tf.value
+
+        if User_contorl.account_check(user_name_tf.value):
+            page.go("/password")
+        else:
+            page.go("/new_password")
+
+        page.update()
+
+    def new_password_check(e):
+        if User_contorl.new_password_check(new_password_tf.value,new_password_check_tf.value):
+            user["user_password"] = new_password_tf.value
+            User_contorl.account_new(user["user_name"],user["user_password"])
+            page.go("/message")
+        else:
+            new_password_check_tf.error_text = "비밀번호가 다릅니다"
+
+        page.update()
+
     def password_check(e):
-        correct = "1234"
-        
-        if password_tf.value == correct:
+        user_name = user["user_name"]
+        input_password = password_tf.value
+        if User_contorl.password_check(user_name,input_password):
             page.go("/message")
 
         else:
@@ -138,7 +232,7 @@ def main(page : Page):
             user_name_tf.error_text = "이름을 입력해주세요"
 
         else:
-            page.go("/password")
+            account_check(user_name_tf.value)
 
         page.update()
 
@@ -146,6 +240,10 @@ def main(page : Page):
         page.views.clear()
         page.views.append(
             main_page
+            )
+        if page.route == "/new_password":
+            page.views.append(
+                new_password_page
             )
         if page.route == "/password":
             page.views.append(
@@ -164,6 +262,8 @@ def main(page : Page):
 
     user_name_tf = ft.TextField(label="이름",hint_text = "이름을 작성해주세요",text_size=15,width=250,value="admin",on_submit=blank_check)
     password_tf = ft.TextField(label="비밀번호",hint_text = "비밀번호를 작성해주세요",text_size=15,password=True, can_reveal_password=True,width=250,keyboard_type="NUMBER",value="1234",on_submit=password_check)
+    new_password_tf = ft.TextField(label="사용할 비밀번호",hint_text = "비밀번호를 작성해주세요",text_size=15,password=True, can_reveal_password=True,width=250,keyboard_type="NUMBER",value="1234",on_submit=password_check)
+    new_password_check_tf = ft.TextField(label="비밀번호 확인",text_size=15,password=True, can_reveal_password=True,width=250,keyboard_type="NUMBER",value="1234",on_submit=password_check)
     message_tf = ft.TextField(autofocus=True,shift_enter=True,expand=True,on_submit=send)
 
     record_btn = ft.IconButton(icon=ft.icons.KEYBOARD_VOICE,icon_size=35)
@@ -180,6 +280,16 @@ def main(page : Page):
                     user_name_tf,
                     ft.ElevatedButton("확인", on_click=blank_check),
                 ],spacing=25,vertical_alignment="center",horizontal_alignment="center"
+                )
+    new_password_page =ft.View(
+                    "/new_password",
+                    [
+                        ft.Icon(name = ft.icons.PASSWORD,color = "black",size = 150),
+                        ft.Text(value="사용할 비밀번호를 작성해주세요", color="gray100",font_family="nanum_light",size=20,text_align="center"),
+                        new_password_tf,
+                        new_password_check_tf,
+                        ft.ElevatedButton("확인", on_click=new_password_check),
+                    ],spacing=25,vertical_alignment="center",horizontal_alignment="center"
                 )
     password_page =ft.View(
                     "/password",
