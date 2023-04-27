@@ -7,6 +7,7 @@ import datetime
 import pyaudio
 import wave
 import whisper
+import time
 
 try:
     os.chdir(sys._MEIPASS)
@@ -156,22 +157,8 @@ class ChatMessage(ft.Row):
     
 def init_system():
     os.makedirs(os.path.join(*["assets","info"]), exist_ok=True)
-    assets = {}
-    fonts = {}
-    imgs = {}
-    for i in glob(os.path.join(*["assets","fonts","*.ttf"])):
-        if "NanumGothicBold" in i:
-            fonts["bold"] = i
-        elif "NanumGothicExtraBold" in i:
-            fonts["extrabold"] = i
-        elif "NanumGothicLight" in i:
-            fonts["light"] = i
-        elif "NanumGothic" in i:
-            fonts["normal"] = i
-    
-    for i in glob(os.path.join(*["assets","img","*.svg"])):
-        if "background" in i:
-            imgs["background"] = i
+    os.makedirs(os.path.join(*["assets","wav"]), exist_ok=True)
+
     temp = os.path.join(*["assets","info","user_info.csv"])
     try:
         temp = pd.read_csv(temp)
@@ -193,20 +180,17 @@ def init_system():
         df["user_emotion"] = None
         df.to_csv(temp,index=False)
 
-    model = whisper.load_model("base")
-
-    assets["fonts"] = fonts
-    assets["imgs"] = imgs
-    assets["model"] = model
-    
-
-    return assets
-
 def main(page : ft.Page):
+    page.title = "My Little Friend"
+    page.window_height=800
+    page.window_width=480
+    page.window_min_height = 800
+    page.window_min_width=480
     hf = ft.HapticFeedback()
     page.overlay.append(hf)
-    assets = init_system()
 
+    init_system()
+    
     user = {
         "user_name" : str(),
         "user_password" : str()
@@ -219,20 +203,8 @@ def main(page : ft.Page):
         "user_emotion" : str(),
     }
 
-    def style_init():
-        page.title = "My Little Friend"
-        page.window_height=800
-        page.window_width=480
-        page.window_min_height = 800
-        page.window_min_width=480
-        page.fonts = {
-            "nanum_normal" : assets["fonts"]["normal"],
-            "nanum_bold" : assets["fonts"]["bold"],
-            "nanum_extrabold" : assets["fonts"]["extrabold"],
-            "nanum_light" : assets["fonts"]["light"],
-        }
-    style_init()
-
+    model = whisper.load_model("base")
+    model.transcribe(os.path.join("assets","wav","init.wav"))
     def send(e):
         if not message_tf.value :
             msg = ChatMessage(message_tf.value,"gpt")
@@ -308,13 +280,13 @@ def main(page : ft.Page):
 
     def close_bs(e):
         global recorder
-        bs.open = False
         recorder.run(False)
-        bs.update()
-        result = assets["model"].transcribe(recorder.filename)["text"]
+        result = model.transcribe(recorder.filename)["text"]
         message_tf.value = result
+        bs.open = False
+        bs.update()
         page.update()
-
+        
     def record_bs(e):
         bs.open = True
         bs.update()
@@ -325,11 +297,12 @@ def main(page : ft.Page):
         now = str(datetime.datetime.now())
         temp = os.path.join(*["assets","wav",".".join([now,"wav"])])
         recorder = AudioRecorder(temp)
-        print(recorder.record_status,"@@@",recorder.recording)
+
         while True:
             recorder.run(True)
             if recorder.recording == False:
                 break
+        time.sleep(0.1)
 
     def view_pop(view):
         page.views.pop()
@@ -369,8 +342,8 @@ def main(page : ft.Page):
                 "/",
                 [
                     ft.Icon(name = ft.icons.QUESTION_ANSWER,color = "black",size = 80),
-                    ft.Text(value="편하게 이야기 하는", color="gray100",font_family="nanum_light",size=20,text_align="center"),
-                    ft.Text(value="나만의 작은 친구", color="brown200",font_family="nanum_extrabold",size=35,text_align="center"),
+                    ft.Text(value="편하게 이야기 하는", color="gray100",weight=ft.FontWeight.W_100,size=20,text_align="center"),
+                    ft.Text(value="나만의 작은 친구", color="brown200",weight=ft.FontWeight.W_500,size=35,text_align="center"),
                     user_name_tf,
                     ft.ElevatedButton("확인", on_click=blank_check),
                 ],spacing=25,vertical_alignment="center",horizontal_alignment="center"
@@ -379,7 +352,7 @@ def main(page : ft.Page):
                     "/new_password",
                     [
                         ft.Icon(name = ft.icons.PASSWORD,color = "black",size = 150),
-                        ft.Text(value="사용할 비밀번호를 작성해주세요", color="gray100",font_family="nanum_light",size=20,text_align="center"),
+                        ft.Text(value="사용할 비밀번호를 작성해주세요", color="gray100",weight=ft.FontWeight.W_100,size=20,text_align="center"),
                         new_password_tf,
                         new_password_check_tf,
                         ft.ElevatedButton("확인", on_click=new_password_check),
