@@ -282,7 +282,7 @@ def main(page : ft.Page):
         global recorder
         recorder.run(False)
         result = model.transcribe(recorder.filename)["text"]
-        message_tf.value = result
+        message_tf.value += result
         bs.open = False
         bs.update()
         page.update()
