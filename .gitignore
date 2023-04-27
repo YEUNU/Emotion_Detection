@@ -16,12 +16,8 @@
 *_LOCAL_*.txt
 *_REMOTE_*.txt
 
-/DL/dataset/cleaned_data.csv
-/DL/dataset/한국어_단발성_대화_데이터셋.xlsx
-/DL/dataset/mlruns/*
-/DL/dataset/klue-bert-token_len_64-batch_size_16-lr_5e-05-weight_decay_0.01.zip
-/DL/dataset/klue-bert-token_len_64-batch_size_16-lr_5e-05-weight_decay_0.01.pth
-/DL/dataset/bert-kor-base.pth
+/DL/models/
+/DL/dataset/mlruns/
 
 ### macOS ###
 # General
