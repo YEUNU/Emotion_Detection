@@ -219,11 +219,6 @@ async def main(page : ft.Page):
     init_system()
 
     model = whisper.load_model("base")
-
-    try:
-        model.transcribe(np.array([0],dtype=np.float32))
-    except:
-        model.transcribe(np.array([0],dtype=np.float16))
         
     user = {
         "user_name" : str(),
