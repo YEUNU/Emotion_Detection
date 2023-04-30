@@ -47,6 +47,7 @@ class AudioRecord(ft.UserControl):
 
         except asyncio.CancelledError:
             pass
+
         finally:
             self.stream.stop_stream()
             self.stream.close()
@@ -80,14 +81,14 @@ class Whisper(ft.UserControl):
         self.running = False
 
     async def stt(self):
-        self.text.value = self.message_tf.value
-        self.text.value += self.model.transcribe(self.filename)["text"]
-        print(self.text.value)
+        self.text = self.message_tf.value
+        self.text += self.model.transcribe(self.filename)["text"]
+        print(self.text)
         await self.update_async()
 
     def build(self):
-        self.text = ft.Text(visible=False)
-        return self.text
+        self.ring = ft.ProgressRing(visible=True)
+        return self.ring
     
 class User_contorl():
     def account_new(user_name,user_password):
@@ -117,6 +118,7 @@ class User_contorl():
             return True
         else:
             return False
+        
     def new_password_check(new_password,new_password_check):
         if new_password == new_password_check:
             return True
@@ -149,7 +151,6 @@ class ChatMessage(ft.Row):
                     ft.Text(text, selectable=True),
                     alignment=ft.alignment.center_right,
                     bgcolor=ft.colors.LIGHT_BLUE_50,
-                    # width=380,
                     height=40,
                     padding=5,
                     margin=5,
@@ -173,7 +174,6 @@ class ChatMessage(ft.Row):
                     ft.Text(text, selectable=True),
                     alignment=ft.alignment.center_right,
                     bgcolor=ft.colors.LIGHT_GREEN_50,
-                    # width=380,
                     height=40,
                     padding=5,
                     margin=5,
@@ -292,7 +292,8 @@ async def main(page : ft.Page):
         await page.add_async(temp)
         await bs.update_async()
         await asyncio.sleep(1)
-        msg_tf.value = temp.text.value
+        msg_tf.value = temp.text
+        await page.remove_async(temp)
         await page.update_async()
 
         
