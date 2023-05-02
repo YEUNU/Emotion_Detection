@@ -1,7 +1,7 @@
 import os
 import openai
 openai.organization = "org-URZ05Egxb2USeXMQiHVKMCKr"
-openai.api_key = "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"
+openai.api_key = "open api key" # 공급 받아야함
 
 conversation=[] # 대화 내용
 
