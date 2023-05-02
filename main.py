@@ -86,7 +86,7 @@ class Whisper(ft.UserControl):
         await self.update_async()
 
     def build(self):
-        self.ring = ft.ProgressRing(visible=True)
+        self.ring = ft.ProgressBar(expand=True)
         return self.ring
     
 class User_contorl():
