@@ -83,7 +83,6 @@ class Whisper(ft.UserControl):
     async def stt(self):
         self.text = self.message_tf.value
         self.text += self.model.transcribe(self.filename)["text"]
-        print(self.text)
         await self.update_async()
 
     def build(self):
@@ -291,11 +290,11 @@ async def main(page : ft.Page):
         temp = Whisper(filename=recorder.filename,model=model,message_tf=msg_tf)
         await page.add_async(temp)
         await bs.update_async()
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.1)
         msg_tf.value = temp.text
         await page.remove_async(temp)
+        page.controls.pop()
         await page.update_async()
-
         
     async def record_bs(e):
         global recorder
