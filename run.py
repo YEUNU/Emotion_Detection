@@ -1,5 +1,6 @@
 from emotion_detect import *
-import time
+from chatgpt import generate_gpt3_response
+
 
 if __name__ == "__main__":
     # example Emotion Classifier
