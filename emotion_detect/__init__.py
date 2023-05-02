@@ -12,7 +12,7 @@ LABEL_DICT = {idx : label for idx, label in zip(range(N_CLASSES), ['anger', 'dis
 # base model name
 CHECKPOINT_BASE = "klue/bert-base"
 # fine-tuned model path
-PRETRAINED = "/home/wonhong/workspace/Emotion_Detection/DL/models/clean_norm_repeat/klue-bert-token_len_64-batch_size_16-drop_out_0.5-lr_2e-05-weight_decay_0.01 + 1_best.pth"
+PRETRAINED = "/home/wonhong/workspace/Emotion_Detection/DL/models/multi-dataset/klue-bert-token_len_64-batch_size_16-drop_out_0.5-lr_2e-05-weight_decay_0.01 + 0_best.pth"
 
 # model params
 TOKEN_LEN = 64
