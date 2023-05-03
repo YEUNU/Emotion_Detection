@@ -1,12 +1,15 @@
 import flet as ft
 import pandas as pd
-import os,sys
+import os,sys,re
 import numpy as np
 import datetime
 import pyaudio
 import wave
 import whisper
 import asyncio
+import gdown
+import chatgpt
+from chatgpt import generate_gpt3_response
 
 try:
     exe_dir = os.getcwd()
@@ -14,6 +17,22 @@ try:
     print(sys._MEIPASS)
 except:
     os.chdir(os.getcwd())
+
+user_message = {
+    "user_name" : None,
+    "user_time" : None,
+    "user_message" : None,
+    "user_reply" : None,
+    "user_emotion" : None,
+}
+user_info = {
+    "user_name" : None,
+    "user_password" : None
+}
+
+user_info_dir = os.path.join(*[exe_dir,".assets","info","user_info.csv"])
+user_message_dir = os.path.join(*[exe_dir,".assets","info","user_message.csv"])
+
 
 class AudioRecord(ft.UserControl):
     def __init__(self,filename=None,model=None):
@@ -86,22 +105,42 @@ class Whisper(ft.UserControl):
         await self.update_async()
 
     def build(self):
-        self.ring = ft.ProgressBar(expand=True)
-        return self.ring
+        self.bar = ft.ProgressBar(expand=True)
+        return self.bar
+
+class gpt(ft.UserControl):
+    def __init__(self, sen):
+        super().__init__()
+        self.sen = sen
+        self.text = None
+        self.msg = ChatMessage(message_type="gpt_load")
+
+    async def did_mount_async(self):
+        asyncio.create_task(self.gpt())
+
+    async def will_unmount_async(self):
+        pass
+    
+
+    async def gpt(self):
+        self.text = generate_gpt3_response(chatgpt.conversation, self.sen)
+        user_message["user_reply"] = [self.text]
+
+    def build(self):
+        self.bar = ft.ProgressBar(expand=True)
+        return self.bar
     
 class User_contorl():
     def account_new(user_name,user_password):
-        temp = os.path.join(*[exe_dir,".assets","info","user_info.csv"])
-        orig = pd.read_csv(temp)
+        orig = pd.read_csv(user_info_dir)
         new = pd.DataFrame()
         new["user_name"] = [user_name]
         new["user_password"] = [user_password]
         result = pd.concat([orig,new],axis=0)
-        result.to_csv(temp,index=False)
+        result.to_csv(user_info_dir,index=False)
 
     def account_check(user_name):
-        temp = os.path.join(*[exe_dir,".assets","info","user_info.csv"])
-        orig = pd.read_csv(temp)
+        orig = pd.read_csv(user_info_dir)
         names = np.unique(orig["user_name"])
         if user_name in names:
             return True
@@ -109,8 +148,7 @@ class User_contorl():
             return False
     
     def password_check(user_name,user_password):
-        temp = os.path.join(*[exe_dir,".assets","info","user_info.csv"])
-        orig = pd.read_csv(temp)
+        orig = pd.read_csv(user_info_dir)
         pwd = str(*orig["user_password"][orig["user_name"]==user_name].values)
 
         if user_password == pwd:
@@ -136,24 +174,24 @@ class Data_control():
         new["user_reply"] = [reply]
         new["user_emotion"] = [emotion]
 
-        temp = os.path.join(*[exe_dir,".assets","info","user_message.csv"])
-        orig = pd.read_csv(temp)
+        orig = pd.read_csv(user_message_dir)
         result = pd.concat([orig,new],axis=0)
-        result.to_csv(temp,index=False)
+        result.to_csv(user_message_dir,index=False)
 
 class ChatMessage(ft.Row):
-    def __init__(self, text,message_type):
+    def __init__(self, text=None,message_type=None):
         super().__init__()
-        if message_type == "user":
+        self.text = text
+        self.message_type = message_type
+        if self.message_type == "user":
             self.controls = [
                 ft.Container(
-                    ft.Text(text, selectable=True),
+                    ft.Text(self.text, selectable=True),
                     alignment=ft.alignment.center_right,
                     bgcolor=ft.colors.LIGHT_BLUE_50,
-                    height=40,
-                    padding=5,
+                    padding=15,
                     margin=5,
-                    border_radius=5,
+                    border_radius=10,
                     expand=True
                     ),
                 ft.Icon(
@@ -162,7 +200,7 @@ class ChatMessage(ft.Row):
                     color=ft.colors.BLACK45
                     )
             ]
-        else:
+        elif self.message_type == "gpt":
             self.controls = [
                 ft.Icon(
                     name=ft.icons.ACCOUNT_CIRCLE,
@@ -170,33 +208,49 @@ class ChatMessage(ft.Row):
                     color=ft.colors.BLACK45
                     ),
                 ft.Container(
-                    ft.Text(text, selectable=True),
+                    ft.Text(self.text, selectable=True),
                     alignment=ft.alignment.center_right,
                     bgcolor=ft.colors.LIGHT_GREEN_50,
-                    height=40,
-                    padding=5,
+                    padding=15,
                     margin=5,
-                    border_radius=5,
+                    border_radius=10,
+                    expand=True
+                    )
+            ]
+        elif self.message_type == "gpt_load":
+            self.controls = [
+                ft.Icon(
+                    name=ft.icons.ACCOUNT_CIRCLE,
+                    size=40,
+                    color=ft.colors.BLACK45
+                    ),
+                ft.Container(
+                    ft.Text(value="",visible=False),
+                    ft.ProgressRing(),
+                    alignment=ft.alignment.center,
+                    bgcolor=ft.colors.LIGHT_GREEN_50,
+                    padding=15,
+                    margin=5,
+                    border_radius=10,
                     expand=True
                     )
             ]
 
+    
 def init_system():
     os.makedirs(os.path.join(*[exe_dir,".assets","info"]), exist_ok=True)
     os.makedirs(os.path.join(*[exe_dir,".assets","wav"]), exist_ok=True)
 
-    temp = os.path.join(*[exe_dir,".assets","info","user_info.csv"])
     try:
-        temp = pd.read_csv(temp)
+        pd.read_csv(user_info_dir)
     except:
         df = pd.DataFrame()
         df["user_name"] = None
         df["user_password"] = None
-        df.to_csv(temp,index=False)
+        df.to_csv(user_info_dir,index=False)
         
-    temp = os.path.join(*[exe_dir,".assets","info","user_message.csv"])
     try:
-        temp = pd.read_csv(temp)
+        pd.read_csv(user_message_dir)
     except:
         df = pd.DataFrame()
         df["user_name"] = None
@@ -204,7 +258,7 @@ def init_system():
         df["user_message"] = None
         df["user_reply"] = None
         df["user_emotion"] = None
-        df.to_csv(temp,index=False)
+        df.to_csv(user_message_dir,index=False)
 
 async def main(page : ft.Page):
     page.title = "My Little Friend"
@@ -215,26 +269,16 @@ async def main(page : ft.Page):
     page.vertical_alignment = "center"
     page.horizontal_alignment = "center"
 
+
     init_system()
 
-    model = whisper.load_model("base")
-        
-    user = {
-        "user_name" : str(),
-        "user_password" : str()
-    }
-    message = {
-        "user_name" : str(),
-        "user_time" : str(),
-        "user_message" : str(),
-        "user_reply" : str(),
-        "user_emotion" : str(),
-    }
+    import emotion_detect
+    from emotion_detect import EmotionClassifier
 
     async def new_pwd_check(e):
         if User_contorl.new_password_check(new_pwd_tf.value,new_pwd_chk_tf.value):
-            user["user_password"] = new_pwd_tf.value
-            User_contorl.account_new(user["user_name"],user["user_password"])
+            user_info["user_password"] = new_pwd_tf.value
+            User_contorl.account_new(user_info["user_name"],user_info["user_password"])
             app.selected_index = 3
         else:
             new_pwd_chk_tf.error_text = "비밀번호가 다릅니다"
@@ -242,8 +286,8 @@ async def main(page : ft.Page):
         await page.update_async()
 
     async def account_check(e):
-        user["user_name"] = user_name_tf.value
-        message["user_name"] = user_name_tf.value
+        user_info["user_name"] = user_name_tf.value
+        user_message["user_name"] = user_name_tf.value
 
         if User_contorl.account_check(user_name_tf.value):
             app.selected_index = 1
@@ -262,7 +306,7 @@ async def main(page : ft.Page):
         await page.update_async()
 
     async def pwd_check(e):
-        user_name = user["user_name"]
+        user_name = user_info["user_name"]
         inp = pwd_tf.value
         if User_contorl.password_check(user_name,inp):
             app.selected_index = 3
@@ -271,23 +315,55 @@ async def main(page : ft.Page):
 
         await page.update_async()
 
+    async def emotion(user_sen):
+        return emotion_detect.emotion_classifier.predict(user_sen)
+    
     async def send(e):
-        if not msg_tf.value :
-            msg = ChatMessage(msg_tf.value,"gpt")
-            chat.controls.append(msg)
-        else:
-            msg = ChatMessage(msg_tf.value,"user")
+        if msg_tf.value:
+            now = datetime.datetime.now()
+            date_format = "%Y_%m_%d_%H_%M_%S"
+            now = now.strftime(date_format)
+
+            user_sen = msg_tf.value
+            msg = ChatMessage(user_sen,"user")
             chat.controls.append(msg)
             msg_tf.value = str()
 
-        await page.update_async()
+            chatgpt.conversation[0]['content'] = re.sub(r'\s+', ' ', chatgpt.conversation[0]['content'].strip())
+            emotion_pred = await emotion(user_sen)
+
+            if emotion_pred[0] in ['분노', '불안', '슬픔', '혐오']:
+                changed_sen = '공감해 줘. 조언해 줘. ' + user_sen
+            else:
+                changed_sen = '공감해 줘. ' +  user_sen
+
+            temp = gpt(changed_sen)
+            await page.add_async(temp)
+
+            await page.remove_async(temp)
+            await page.update_async()
+
+            rp = ChatMessage(*user_message["user_reply"],"gpt")
+            chat.controls.append(rp)
+            
+            await page.update_async()
+            user_message["user_time"] = [now]
+            user_message["user_message"] = [user_sen]
+            user_message["user_emotion"] = [emotion_pred]
+
+            orig = pd.read_csv(user_message_dir)
+            new = pd.DataFrame.from_dict(user_message,orient="columns")
+            
+            new = pd.concat([orig,new],axis=0)
+            print(new)
+            new.to_csv(user_message_dir,index=False)
 
     async def close_bs(e):
         global recorder
         recorder.running = False
         recorder.task.cancel() 
         bs.open = False
-        temp = Whisper(filename=recorder.filename,model=model,message_tf=msg_tf)
+        temp = Whisper(filename=recorder.filename,model=whisper_model,message_tf=msg_tf)
         await page.add_async(temp)
         await bs.update_async()
         await asyncio.sleep(0.1)
@@ -304,9 +380,9 @@ async def main(page : ft.Page):
         date_format = "%Y_%m_%d_%H_%M_%S"
 
         now = now.strftime(date_format)
-
+        user_message["user_time"] = [now]
         temp = os.path.join(*[exe_dir,".assets","wav",".".join([now,"wav"])])
-        recorder = AudioRecord(filename=temp,model=model)
+        recorder = AudioRecord(filename=temp,model=whisper_model)
         await page.add_async(recorder)
 
     user_name_tf = ft.TextField(label="이름",hint_text = "이름을 작성해주세요",text_size=15,width=250,value="admin",on_submit=blank_check)
@@ -393,6 +469,11 @@ async def main(page : ft.Page):
                 ),
             ],expand=True)
     
+    whisper_model = whisper.load_model("base")
+    dest_path = os.path.join(exe_dir,"emotion_detect","multi-datasetklue-bert-token_len_64-batch_size_16-drop_out_0.5-lr_2e-05-weight_decay_0.01 + 9.pth")
+    if not os.path.isfile(dest_path):
+        gdown.download("https://drive.google.com/uc?id=1laKn5IbhOIi5vEOqE0Jh1xCNDX0vyCgL",dest_path)
+
     await page.add_async(app)
     await page.update_async()
 

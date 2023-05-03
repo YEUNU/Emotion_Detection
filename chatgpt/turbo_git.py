@@ -1,8 +1,8 @@
 import os
 import openai
+# import asyncio
 openai.organization = "org-URZ05Egxb2USeXMQiHVKMCKr"
 openai.api_key = "open api key" # 공급 받아야함
-
 
 # conversation=[] # 대화 내용
 
