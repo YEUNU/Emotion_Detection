@@ -251,3 +251,4 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,macos,git,python
+emotion_detect/multi-datasetklue-bert-token_len_64-batch_size_16-drop_out_0.5-lr_2e-05-weight_decay_0.01 + 9.pth
