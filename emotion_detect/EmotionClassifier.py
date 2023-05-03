@@ -2,7 +2,7 @@ import os
 os.environ['TOKENIZERS_PARALLELISM'] = 'true'
 
 import pandas as pd
-pd.options.display.max_columns = None
+# pd.options.display.max_columns = None
 import numpy as np
 
 import torch
@@ -30,6 +30,7 @@ class EmotionClassifier():
         self.model = model
         self.tokenizer = tokenizer
         self.labels = labels_dict
+        self.max_length = max_length
         
     def predict(self, sentence):
         tokens = self.tokenizer(
@@ -38,7 +39,7 @@ class EmotionClassifier():
             truncation=True,         # 잘라내기 적용
             padding='max_length',    # 패딩 적용
             add_special_tokens=True, # 스페셜 토큰 적용
-            max_length = 64,
+            max_length = self.max_length,
         )
         tokens.to(self.device)
         prediction = self.model(**tokens)
@@ -49,6 +50,7 @@ class EmotionClassifier():
         
         return result, prob
         
+        
 if __name__ == "__main__":
     if torch.cuda.is_available():
         device = torch.device('cuda:0')
@@ -57,7 +59,8 @@ if __name__ == "__main__":
     print(device)
     
     N_CLASSES = 7
-    LABEL_DICT = {idx : label for idx, label in zip(range(N_CLASSES), ['anger', 'disgust', 'fear', 'happiness', 'neutralism', 'sadness', 'surprise'])}
+    # LABEL_DICT = {idx : label for idx, label in zip(range(N_CLASSES), ['anger', 'disgust', 'fear', 'happiness', 'neutralism', 'sadness', 'surprise'])}
+    LABEL_DICT = {idx : label for idx, label in zip(range(N_CLASSES), ['당황', '분노', '불안', '슬픔', '중립', '행복', '혐오'])}
     
     CHECKPOINT_BASE = "klue/bert-base"
     PRETRAINED = "/home/wonhong/workspace/Emotion_Detection/DL/models/clean_norm_repeat/klue-bert-token_len_64-batch_size_16-drop_out_0.5-lr_2e-05-weight_decay_0.01 + 1_best.pth"

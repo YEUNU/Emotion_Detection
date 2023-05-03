@@ -7,7 +7,8 @@ else:
 print(device)
 
 N_CLASSES = 7
-LABEL_DICT = {idx : label for idx, label in zip(range(N_CLASSES), ['anger', 'disgust', 'fear', 'happiness', 'neutralism', 'sadness', 'surprise'])}
+# LABEL_DICT = {idx : label for idx, label in zip(range(N_CLASSES), ['anger', 'disgust', 'fear', 'happiness', 'neutralism', 'sadness', 'surprise'])}
+LABEL_DICT = {idx : label for idx, label in zip(range(N_CLASSES), ['당황', '분노', '불안', '슬픔', '중립', '행복', '혐오'])}
 
 # base model name
 CHECKPOINT_BASE = "klue/bert-base"
