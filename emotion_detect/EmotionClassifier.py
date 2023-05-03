@@ -4,7 +4,6 @@ os.environ['TOKENIZERS_PARALLELISM'] = 'true'
 import pandas as pd
 # pd.options.display.max_columns = None
 import numpy as np
-
 import torch
 from transformers import AutoModel, AutoTokenizer
 
@@ -52,6 +51,8 @@ class EmotionClassifier():
         
         
 if __name__ == "__main__":
+    base_path = os.getcwd()
+
     if torch.cuda.is_available():
         device = torch.device('cuda:0')
     else:
@@ -62,26 +63,30 @@ if __name__ == "__main__":
     # LABEL_DICT = {idx : label for idx, label in zip(range(N_CLASSES), ['anger', 'disgust', 'fear', 'happiness', 'neutralism', 'sadness', 'surprise'])}
     LABEL_DICT = {idx : label for idx, label in zip(range(N_CLASSES), ['당황', '분노', '불안', '슬픔', '중립', '행복', '혐오'])}
     
+    exe_dir = os.getcwd()
+    dest_path = os.path.join(exe_dir,"emotion_detect","multi-datasetklue-bert-token_len_64-batch_size_16-drop_out_0.5-lr_2e-05-weight_decay_0.01 + 9.pth")
     CHECKPOINT_BASE = "klue/bert-base"
-    PRETRAINED = "/home/wonhong/workspace/Emotion_Detection/DL/models/clean_norm_repeat/klue-bert-token_len_64-batch_size_16-drop_out_0.5-lr_2e-05-weight_decay_0.01 + 1_best.pth"
+    PRETRAINED = dest_path
 
     token_len = 64
     drop_out = 0.5
     
     model = Bert(CHECKPOINT_BASE, drop_out, N_CLASSES)
-    model.load_state_dict(torch.load(PRETRAINED))
-    eclf = EmotionClassifier(device, model, AutoTokenizer.from_pretrained(CHECKPOINT_BASE), LABEL_DICT, max_length=token_len)
+    model.load_state_dict(torch.load(PRETRAINED,map_location=device))
+    tokenizer = AutoTokenizer.from_pretrained(CHECKPOINT_BASE)
+
+    eclf = EmotionClassifier(device, model,tokenizer , LABEL_DICT, max_length=token_len)
     
     # dummy prediction for gpu warming up, It would take about 5~ sec.
     eclf.predict("warm up") 
-    
-    import time
-    while True :
-        sentence = input("Enter txt :")
-        if sentence == 'q' or sentence == 'Q':
-            print("BYE")
-            break
-        start = time.time()
-        print(eclf.predict(sentence))
-        end = time.time()
-        print(f"time to predict : {end-start:.5f} sec")
+#     print("warm up bro")
+#     # import time
+#     # while True :
+#     #     sentence = input("Enter txt :")
+#     #     if sentence == 'q' or sentence == 'Q':
+#     #         print("BYE")
+#     #         break
+#     #     start = time.time()
+#     #     print(eclf.predict(sentence))
+#     #     end = time.time()
+#     #     print(f"time to predict : {end-start:.5f} sec")
