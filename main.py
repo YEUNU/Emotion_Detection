@@ -269,8 +269,12 @@ async def main(page : ft.Page):
     page.vertical_alignment = "center"
     page.horizontal_alignment = "center"
 
-
     init_system()
+
+    whisper_model = whisper.load_model("base")
+    dest_path = os.path.join(exe_dir,"emotion_detect","multi-datasetklue-bert-token_len_64-batch_size_16-drop_out_0.5-lr_2e-05-weight_decay_0.01 + 9.pth")
+    if not os.path.isfile(dest_path):
+        gdown.download("https://drive.google.com/uc?id=1laKn5IbhOIi5vEOqE0Jh1xCNDX0vyCgL",dest_path)
 
     import emotion_detect
     from emotion_detect import EmotionClassifier
@@ -469,10 +473,7 @@ async def main(page : ft.Page):
                 ),
             ],expand=True)
     
-    whisper_model = whisper.load_model("base")
-    dest_path = os.path.join(exe_dir,"emotion_detect","multi-datasetklue-bert-token_len_64-batch_size_16-drop_out_0.5-lr_2e-05-weight_decay_0.01 + 9.pth")
-    if not os.path.isfile(dest_path):
-        gdown.download("https://drive.google.com/uc?id=1laKn5IbhOIi5vEOqE0Jh1xCNDX0vyCgL",dest_path)
+
 
     await page.add_async(app)
     await page.update_async()
