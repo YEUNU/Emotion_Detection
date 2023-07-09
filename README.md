@@ -28,7 +28,7 @@ K-digital Training 교육생 "VALUE UP" 공모전용 프로젝트
 
 | 메인 화면 | 회원가입 | 채팅창 | STT | 사용자 입력 | GPT 결과 |
 | --- | --- | --- | --- | --- | --- |
-| <img src="https://user-images.githubusercontent.com/61678329/251390764-acd21dab-8451-43a7-8ef3-e3ac0c63a8dc.png" width="300px"> | <img src="https://user-images.githubusercontent.com/61678329/251390771-f552e40f-2027-42d4-9b13-5078a3c37261.png" width="300px"> | <img src="https://user-images.githubusercontent.com/61678329/251390773-4b3779c1-e2dd-4a8f-bbb3-f11be2a64d4c.png" width="300px"> | <img src="https://user-images.githubusercontent.com/61678329/251390781-f2cd9bac-a019-4f61-94d9-d72f483b3835.png" width="300px"> | <img src="https://user-images.githubusercontent.com/61678329/251390782-c1aa4c8c-92ac-448f-a44d-236bbeea335e.png" width="300px"> | <img src="https://user-images.githubusercontent.com/61678329/251390784-faf8aae7-0224-4039-8e21-1cb47aa542f0.png" width="300px">|  
+| <img src="https://user-images.githubusercontent.com/61678329/251390764-acd21dab-8451-43a7-8ef3-e3ac0c63a8dc.png" width="320px"> | <img src="https://user-images.githubusercontent.com/61678329/251390771-f552e40f-2027-42d4-9b13-5078a3c37261.png" width="320px"> | <img src="https://user-images.githubusercontent.com/61678329/251390773-4b3779c1-e2dd-4a8f-bbb3-f11be2a64d4c.png" width="320px"> | <img src="https://user-images.githubusercontent.com/61678329/251390781-f2cd9bac-a019-4f61-94d9-d72f483b3835.png" width="320px"> | <img src="https://user-images.githubusercontent.com/61678329/251390782-c1aa4c8c-92ac-448f-a44d-236bbeea335e.png" width="320px"> | <img src="https://user-images.githubusercontent.com/61678329/251390784-faf8aae7-0224-4039-8e21-1cb47aa542f0.png" width="320px">|  
 
 | 결과 영상 |
 |:-:|
@@ -58,7 +58,7 @@ KoBert Fine Tuning
 
 | Confusion Matrix | Bar Graph |
 | --- | --- |
-| ![Confusion Matrix](https://user-images.githubusercontent.com/61678329/252130299-e329ce4a-aa2e-4908-a2cd-4345f2dd2423.png) | ![Bar Graph](https://user-images.githubusercontent.com/61678329/252132321-cc2699af-ad9f-41b4-9075-30472ca78383.png) |
+| <img src="https://user-images.githubusercontent.com/61678329/252130299-e329ce4a-aa2e-4908-a2cd-4345f2dd2423.png" alt="Confusion Matrix" style="width: 320px;"> | <img src="https://user-images.githubusercontent.com/61678329/252132321-cc2699af-ad9f-41b4-9075-30472ca78383.png" alt="Bar Graph" style="width: 320px;"> |
 
 
 
